@@ -15,10 +15,21 @@ public class CreditCardPayment extends PaymentMethod {
     @Override
     public PaymentResult processPayment(double amount) {
         String normalizedCardNumber = cardNumber == null ? "" : cardNumber.replaceAll("\\s", "");
-        if (!normalizedCardNumber.matches("\\d{12,19}"))
+
+        if (normalizedCardNumber.length() < 12 || normalizedCardNumber.length() > 19) {
             return new PaymentResult(false, "Invalid card number.");
-        if (cardHolderName == null || cardHolderName.isBlank())
+        }
+
+        for (char c : normalizedCardNumber.toCharArray()) {
+            if (!Character.isDigit(c)) {
+                return new PaymentResult(false, "Invalid card number.");
+            }
+        }
+
+        if (cardHolderName == null || cardHolderName.isBlank()) {
             return new PaymentResult(false, "Card holder name is required.");
+        }
+
         return new PaymentResult(true, "Paid " + amount + " using credit card ending with " + normalizedCardNumber.substring(normalizedCardNumber.length() - 4));
     }
 }
