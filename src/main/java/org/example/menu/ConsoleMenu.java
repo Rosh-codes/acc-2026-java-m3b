@@ -24,7 +24,13 @@ public class ConsoleMenu {
         while(running){
             printMenu();
 
-            int option = Integer.parseInt(scanner.nextLine());
+            int option;
+            try {
+                option = Integer.parseInt(scanner.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a number.");
+                continue;
+            }
 
             switch (option){
                 case 1 -> createOrder();
@@ -48,23 +54,43 @@ public class ConsoleMenu {
     }
 
     private void addItem(){
-        // TODO: check if order exists
+        if (!hasEditableOrder()) return;
 
         System.out.println("Item name:");
         String itemName = scanner.nextLine();
 
         System.out.println("Price:");
-        double price = Double.parseDouble(scanner.nextLine());
+        double price;
+        try {
+            price = Double.parseDouble(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid price.");
+            return;
+        }
 
         System.out.println("Quantity:");
-        int quantity = Integer.parseInt(scanner.nextLine());
+        int quantity;
+        try {
+            quantity = Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid quantity.");
+            return;
+        }
 
-        currentOrder.addItem(new OrderItem(itemName, price, quantity));
+        try {
+            currentOrder.addItem(new OrderItem(itemName, price, quantity));
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+            return;
+        }
         System.out.println("Item added to order");
     }
 
     private void viewOrder(){
-        // TODO: check if order exists
+        if (currentOrder == null) {
+            System.out.println("Create an order first.");
+            return;
+        }
 
         System.out.println("Customer: " + currentOrder.getCustomerName());
         System.out.println("Status: " +  currentOrder.getStatus());
@@ -78,7 +104,10 @@ public class ConsoleMenu {
     }
 
     private void payOrder(){
-        // TODO: check if order exists
+        if (currentOrder == null) {
+            System.out.println("Create an order first.");
+            return;
+        }
 
         System.out.println("""
                 Select payment method:
@@ -86,14 +115,25 @@ public class ConsoleMenu {
                 2. PayPal
                 3. Gift Card
                 """);
-        int option = Integer.parseInt(scanner.nextLine());
+        int option;
+        try {
+            option = Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid payment method.");
+            return;
+        }
 
         PaymentMethod paymentMethod = switch(option){
             case 1 -> createCreditCardPayment();
             case 2 -> createPaypalPayment();
             case 3 -> createGiftCardPayment();
-            default -> throw new IllegalArgumentException("Invalid payment method");
+            default -> null;
         };
+
+        if (paymentMethod == null) {
+            System.out.println("Invalid payment method.");
+            return;
+        }
 
         PaymentResult result = paymentProcessor.process(currentOrder, paymentMethod);
         System.out.println(result.getMessage());
@@ -110,13 +150,34 @@ public class ConsoleMenu {
     }
 
     private  PaymentMethod createPaypalPayment(){
-        // TODO
-        return null;
+        System.out.println("PayPal email:");
+        String email = scanner.nextLine();
+        return PaymentMethodFactory.createPaypalPayment(email);
     }
 
     private PaymentMethod createGiftCardPayment(){
-        // TODO
-        return null;
+        System.out.println("Gift card code:");
+        String code = scanner.nextLine();
+        System.out.println("Gift card balance:");
+        try {
+            double balance = Double.parseDouble(scanner.nextLine());
+            return PaymentMethodFactory.createGiftCardPayment(code, balance);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid balance.");
+            return null;
+        }
+    }
+
+    private boolean hasEditableOrder() {
+        if (currentOrder == null) {
+            System.out.println("Create an order first.");
+            return false;
+        }
+        if (currentOrder.isPaid()) {
+            System.out.println("This order has already been paid.");
+            return false;
+        }
+        return true;
     }
 
     private void printMenu(){

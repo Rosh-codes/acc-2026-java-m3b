@@ -6,6 +6,9 @@ public class OrderItem {
     private final int quantity;
 
     public OrderItem(String name, double price, int quantity) {
+        if (name == null || name.isBlank()) throw new IllegalArgumentException("Item name cannot be empty.");
+        if (!Double.isFinite(price) || price <= 0) throw new IllegalArgumentException("Price must be greater than zero.");
+        if (quantity <= 0) throw new IllegalArgumentException("Quantity must be greater than zero.");
         this.name = name;
         this.price = price;
         this.quantity = quantity;

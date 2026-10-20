@@ -15,8 +15,8 @@ public class AppConfig {
     }
 
     public static AppConfig getInstance(){
-        // TODO
-        return null;
+        if (instance == null) instance = new AppConfig();
+        return instance;
     }
 
     public String getApplicationName() {
